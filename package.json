@@ -1,0 +1,10 @@
+{
+    "name": "geoDataViz",
+    "version": "0.0.1",
+    "description": "GIS data visualizations",
+    "dependencies": {
+        "express": "latest",
+        "jade": "latest"
+    },
+    "author": "Blake"
+}

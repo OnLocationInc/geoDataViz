@@ -1,0 +1,92 @@
+div.chart{
+	border: 3px solid gray;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	margin: 15px 0px;
+}
+
+h4{
+	text-align: center
+}
+
+svg.SVGwrapper{
+}
+
+body { 
+	padding-top: 70px; 
+	background-color: white;
+}
+
+select, option {
+	cursor:pointer;
+}
+
+.dimple-axis{
+	font-size: 20px;
+}
+
+.infoDiv{
+    margin: 1px 10px 5px;
+    padding: 0px 5px;
+    background-color: lightgray;
+    border: 2px solid black;
+    border-radius: 3px;
+    height: 150px;
+}
+
+text.chartTitle{
+	font-size: 18px;
+	font-weight: bold;
+}
+
+text.loadingText{
+	fill: black;
+	font-size:20px;
+	font-weight: bold;
+}
+
+path.HUC{
+	fill: lightorange;
+	opacity: 0.4;
+	stroke: lightgray;
+}
+
+path.state{
+    fill: white;
+    opacity: 0.3;
+    stroke: black;
+}
+
+circle.plants{
+	opacity: 0.8;
+    stroke: black;
+}
+
+rect.yearRect, rect.playRect {
+	fill: lightgray;
+	stroke: black;
+	cursor:pointer;
+}
+
+text.yearRect, text.playRect {
+	font: 10px arial;
+	fill: black;
+	cursor:pointer;
+}
+
+rect.yearRectSelected, rect.playRectSelected {
+	fill: blue;
+	stroke: white;
+	cursor:pointer;
+}
+
+text.yearRectSelected, text.playRectSelected {
+	font: 10px arial;
+	fill: lightgray;
+	cursor:pointer;
+}
+
+rect#loading{
+    opacity: 0.5;
+    fill: white;
+}
