@@ -1,17 +1,9 @@
 'use strict'
 
 const aspectRatio = 1.618;
-const SEASONS = [
-    'Winter',
-    'Spring',
-    'Summer',
-    'Fall'];
-const MAXRADIUS = 7;
-const RADIUSRANGE = _.range(1, MAXRADIUS, 1);
 const MAXZOOM = 20;
 
 let tic;
-let eventQueue = [];
 let projection;
 let path;
 let zoom;    
@@ -57,17 +49,14 @@ function prepMap(cb) {
     z.append('svg:g')
         .attr('id', 'States');
 	z.append('svg:g')
-		.attr('id', 'Basins')
+		.attr('id', 'Regions')
 	z.append('svg:g')
 		.attr('id', 'Circles')
     z.append('svg:g')
         .attr('id', 'load');
 	g.append('svg:g')
-		.attr('id', 'Legend1')
-        .attr('transform', 'translate(20,' + String(g.attr('height') - 140) + ')');
-	g.append('svg:g')
-		.attr('id', 'Legend2')
-        .attr('transform', 'translate(20,' + String(g.attr('height') - 50) + ')');
+		.attr('id', 'Legend')
+        .attr('transform', 'translate(30,' + String(g.attr('height') - 100) + ')');
 	g.append('svg:g')
 		.attr('id', 'Tooltips');
 		
@@ -96,33 +85,42 @@ function prepMap(cb) {
 
 function requestChartData() {
     
-    queue()
-      .defer(d3.json, 'data/huc8_simplified.geojson')
-      .defer(d3.json, 'data/US_STATES.json')
-      .defer(d3.csv, 'data/consWith.csv')
-      .awaitAll(dataReady);
+    const inputs = [
+        {func: d3.json, path: 'data/huc8_simplified.geojson'},
+        {func: d3.json, path: 'data/US_STATES.json'},
+        {func: d3.csv, path: 'data/consWith.csv'},
+    ]
+    
+    //max of 3 xml requests
+    let q = queue(3);
+    
+    _.forEach(inputs, function(input) {
+        q.defer(input.func, input.path);
+    })
+    q.awaitAll(dataReady);
 }
 
 function dataReady(err, data) {
     if(err) return console.log(err);
     
-    const basins = data[0];
+    const regions = data[0];
     const states = data[1];
     const consumpWithdrawal = data[2];
             
-    drawBasins(basins);
-    drawStates(states);
-    
+    drawRegions(regions);
+    drawStates(states);    
     drawCircles(consumpWithdrawal);
+    
+    showElapsed()
 }    
 
-function drawBasins(basinGeoJson) {
+function drawRegions(regionGeoJson) {
 
-	d3.select('#Basins').selectAll('.HUC')
-        .data(basinGeoJson.features)
+	d3.select('#Regions').selectAll('.region')
+        .data(regionGeoJson.features)
       .enter().append('path')
-        .attr('class', function(d) { return 'HUC ' + d.properties.REG})
-        .style('fill', hucFill)
+        .attr('class', function(d) { return 'region ' + d.properties.REG})
+        .style('fill', regFill)
         .attr('d', path);
 }
 
@@ -135,8 +133,9 @@ function drawStates(stateGeoJson) {
 		.attr('d', path);
 }
 
-function hucFill(huc) {
-    switch (huc.properties.REG) {
+function regFill(reg) {
+    
+    switch (reg.properties.REG) {
         case '11':
         case '15':
             return 'green';
@@ -156,34 +155,22 @@ function hucFill(huc) {
 }
 
 function drawCircles(data) {
-    
-    setScales(data);
+        
+    setScales(data, 'withdrawal');
     
     //withdrawal
-    d3.select('#Circles').selectAll('.circleWith')
+    d3.select('#Circles').selectAll('.circle')
         .data(data)
       .enter().append('circle')
         .attr('cx', function(d) { return projection([Number(d.lon), Number(d.lat)])[0]})
         .attr('cy', function(d) { return projection([Number(d.lon), Number(d.lat)])[1]})
-        .attr('class', 'circleWith')
+        .attr('class', 'circle')
         .attr('stroke-width', 1)
-        .attr('r', function(d) {return getRadius(d.withdrawal);})
+        .attr('r', function(d) {return radiusScale(d.withdrawal);})
         .style('fill', 'black');
-
-    //consumption
-    d3.select('#Circles').selectAll('.circleCons')
-        .data(data)
-      .enter().append('circle')
-        .attr('cx', function(d) { return projection([Number(d.lon), Number(d.lat)])[0]})
-        .attr('cy', function(d) { return projection([Number(d.lon), Number(d.lat)])[1]})
-        .attr('class', 'circleCons')
-        .attr('stroke-width', 0.1)
-        .attr('r', function(d) {return getRadius(d.consumption);})
-        .style('fill', 'white');
 	    
-    //draw legend
-    
-    let legend1 = d3.legend.size()
+    //draw legend    
+    let legend = d3.legend.size()
         .scale(radiusScale)
         .cells([1, 10, 100, 1000])
         .shape('circle')
@@ -191,102 +178,27 @@ function drawCircles(data) {
         .labelOffset(20)
         .orient('horizontal')
     
-    d3.select('#Legend1')
-        .call(legend1);    
+    d3.select('#Legend')
+        .call(legend);    
 }
 
-function getRadius(d) {
-    return radiusScale(d)
-}
+function setScales(data, property) {
+    
+    const min = _.min(_.map(data, function (d) {return d[property]}));
+    const max = _.max(_.map(data, function (d) {return d[property]}));
 
-function setScales(data) {
-    
-    const minWithdrawal  = _.min(_.map(data, function(d) {
-        return +d.withdrawal
-    }));
-    const maxWithdrawal  = _.max(_.map(data, function(d) {
-        return +d.withdrawal
-    }));
-    const minConsumption = _.min(_.map(data, function(d) {
-        return +d.consumption
-    }));
-    const maxConsumption = _.max(_.map(data, function(d) {
-        return +d.consumption
-    }));
-    
-    console.log(minWithdrawal, maxWithdrawal, minConsumption, maxConsumption);
-    
     radiusScale = d3.scale.log()
-        .domain([2,4000])
+        .domain([0.9 * min, 1.1 * max])
         .range([5,15]);
-    
-    /*
-    withdrawalScale = d3.scale.log()
-        .domain([2, 4000])
-        .range([6, 16]);
-        
-    consumptionScale = d3.scale.log()
-        .domain([2, maxConsumption])
-        .range([4, 12]);
-        
-    //*/
 }
-
-/*
-function rollupDataByReg(data, locations) {
-    const hucs = {
-        '11': getBlank(),
-        '12': getBlank(),
-        '13': getBlank(),
-        '14': getBlank(),
-        '15': getBlank(),
-        '16': getBlank(),
-        '18': getBlank(),
-    };
-
-    console.log(hucs);
-
-    _.forEach(data, function(datum) {
-        
-        console.log(datum)
-        
-        //find which HUC
-        const huc = _.find(locations, function(l) {
-            return (datum.plant === l.plant);
-        }).REG
-        
-        console.log(huc);
-        
-        if( ! huc ) return;
-        
-        hucs[huc].consumption += Number(datum.consumption);
-        hucs[huc].withdrawal += Number(datum.withdrawal);
-        hucs[huc].generation += Number(datum.generation);
-    });
-    
-    return hucs;
-}
-
-function getBlank() {
-    return {consumption: 0, withdrawal: 0, generation: 0};
-}
-//*/
 
 function zoomed() {
 	d3.select('#zoomWrapper').attr('transform', 'translate(' + d3.event.translate + ')scale(' + d3.event.scale + ')');
-	//unzoom the plants
-	d3.selectAll('.plants')
-        .attr('r', function(d) {
-            return d3.select(this).attr('data-radius') * 2 / (1 + d3.event.scale); 
-        })
-        .attr('stroke-width', function(d) {
-            return 2 / (1 + d3.event.scale)
-        })
-    
+
 	//fix the states
 	d3.selectAll('.state')
 		.attr('stroke-width', 1 / d3.event.scale); 
-	//fix the basins
-	d3.selectAll('.HUC')
+	//fix the regions
+	d3.selectAll('.region')
 		.attr('stroke-width', 1 / d3.event.scale); 
 }

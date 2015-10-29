@@ -1,15 +1,6 @@
-div.chart{
-	border: 3px solid gray;
-	-webkit-border-radius: 5px;
-	border-radius: 5px;
-	margin: 15px 0px;
-}
 
 h4{
 	text-align: center
-}
-
-svg.SVGwrapper{
 }
 
 body { 
@@ -17,12 +8,11 @@ body {
 	background-color: white;
 }
 
-select, option {
-	cursor:pointer;
-}
-
-.dimple-axis{
-	font-size: 20px;
+div.chart{
+	border: 3px solid gray;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	margin: 15px 0px;
 }
 
 .infoDiv{
@@ -39,14 +29,7 @@ text.chartTitle{
 	font-weight: bold;
 }
 
-text.loadingText{
-	fill: black;
-	font-size:20px;
-	font-weight: bold;
-}
-
-path.HUC{
-	fill: lightorange;
+path.region{
 	opacity: 0.4;
 	stroke: lightgray;
 }
@@ -57,36 +40,7 @@ path.state{
     stroke: black;
 }
 
-circle.plants{
+circle.circle{
 	opacity: 0.8;
     stroke: black;
-}
-
-rect.yearRect, rect.playRect {
-	fill: lightgray;
-	stroke: black;
-	cursor:pointer;
-}
-
-text.yearRect, text.playRect {
-	font: 10px arial;
-	fill: black;
-	cursor:pointer;
-}
-
-rect.yearRectSelected, rect.playRectSelected {
-	fill: blue;
-	stroke: white;
-	cursor:pointer;
-}
-
-text.yearRectSelected, text.playRectSelected {
-	font: 10px arial;
-	fill: lightgray;
-	cursor:pointer;
-}
-
-rect#loading{
-    opacity: 0.5;
-    fill: white;
 }
