@@ -6,5 +6,8 @@
         "express": "latest",
         "jade": "latest"
     },
+    "scripts": {
+        "start": node index.js
+    },
     "author": "Blake"
 }

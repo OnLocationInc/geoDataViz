@@ -3,7 +3,10 @@ logs
 *.log
 
 # data
-public/data/
+public/data/repPowerUse.csv
+public/data/repNonPowerUse.csv
+public/data/plantLocHUC.csv
+public/data/Existing_Plants_Cool_HUC.csv
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
