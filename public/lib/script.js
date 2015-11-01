@@ -14,7 +14,9 @@ let radiusScale;
 window.onload = function () {
     tic = new Date();
     prepMap(function(err, p) {projection = p.projection; path = p.path;});
-    requestChartData();	
+    drawStates(INPUTS.states);
+    showElapsed();
+    requestChartData();
 }
 
 function showElapsed() {
@@ -86,8 +88,6 @@ function prepMap(cb) {
 function requestChartData() {
     
     const inputs = [
-        {func: d3.json, path: 'data/huc8_simplified.geojson'},
-        {func: d3.json, path: 'data/US_STATES.json'},
         {func: d3.csv, path: 'data/consWith.csv'},
     ]
     
@@ -98,17 +98,16 @@ function requestChartData() {
         q.defer(input.func, input.path);
     })
     q.awaitAll(dataReady);
+
+    drawRegions(INPUTS.regions);
+
 }
 
 function dataReady(err, data) {
     if(err) return console.log(err);
     
-    const regions = data[0];
-    const states = data[1];
-    const consumpWithdrawal = data[2];
+    const consumpWithdrawal = data[0];
             
-    drawRegions(regions);
-    drawStates(states);    
     drawCircles(consumpWithdrawal);
     
     showElapsed()

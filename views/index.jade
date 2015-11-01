@@ -27,5 +27,10 @@ html(lang="en")
         script(src='http://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js')
         script(src='lib/d3-legend.min.js')
         script(src='lib/saveSvgAsPng.js')
+        script(type = 'text/javascript').
+            var INPUTS = {};
+            INPUTS.states = (!{JSON.stringify(locals.locals)}).states;
+        script(type = 'text/javascript').
+            INPUTS.regions = (!{JSON.stringify(locals.locals)}).regions;
         script(src='lib/script.js')
-        
+            

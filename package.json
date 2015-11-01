@@ -3,8 +3,10 @@
     "version": "0.0.1",
     "description": "GIS data visualizations",
     "dependencies": {
-        "express": "latest",
-        "jade": "latest"
+        "express": "4.13",
+        "jade": "latest",
+        "await": "latest",
+        "d3": "latest"
     },
     "scripts": {
         "start": "node index.js"
