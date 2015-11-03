@@ -6,17 +6,16 @@ const MAXZOOM = 20;
 let tic;
 let projection;
 let path;
-let zoom;    
-let withdrawalScale;
-let consumptionScale;
-let radiusScale;
+let zoom;
 
 window.onload = function () {
     tic = new Date();
     prepMap(function(err, p) {projection = p.projection; path = p.path;});
     drawStates(INPUTS.states);
+    window.setTimeout(function() {
+        cleanAndRender(JSON.stringify(INPUTS.regions), 'REG')
+    }, 10);
     showElapsed();
-    requestChartData();
 }
 
 function showElapsed() {
@@ -41,7 +40,7 @@ function prepMap(cb) {
 	zoom = d3.behavior.zoom()
 		.translate([0,0])
 		.scale(1)
-		.scaleExtent([1,MAXZOOM])
+		.scaleExtent([0.25,MAXZOOM])
 		.on('zoom', zoomed)
 	zoom(g);
 	
@@ -52,13 +51,6 @@ function prepMap(cb) {
         .attr('id', 'States');
 	z.append('svg:g')
 		.attr('id', 'Regions')
-	z.append('svg:g')
-		.attr('id', 'Circles')
-    z.append('svg:g')
-        .attr('id', 'load');
-	g.append('svg:g')
-		.attr('id', 'Legend')
-        .attr('transform', 'translate(30,' + String(g.attr('height') - 100) + ')');
 	g.append('svg:g')
 		.attr('id', 'Tooltips');
 		
@@ -85,44 +77,6 @@ function prepMap(cb) {
 	cb(null, {projection: projection, path: path});
 }
 
-function requestChartData() {
-    
-    const inputs = [
-        {func: d3.csv, path: 'data/consWith.csv'},
-    ]
-    
-    //max of 3 xml requests
-    let q = queue(3);
-    
-    _.forEach(inputs, function(input) {
-        q.defer(input.func, input.path);
-    })
-    q.awaitAll(dataReady);
-
-    drawRegions(INPUTS.regions);
-
-}
-
-function dataReady(err, data) {
-    if(err) return console.log(err);
-    
-    const consumpWithdrawal = data[0];
-            
-    drawCircles(consumpWithdrawal);
-    
-    showElapsed()
-}    
-
-function drawRegions(regionGeoJson) {
-
-	d3.select('#Regions').selectAll('.region')
-        .data(regionGeoJson.features)
-      .enter().append('path')
-        .attr('class', function(d) { return 'region ' + d.properties.REG})
-        .style('fill', regFill)
-        .attr('d', path);
-}
-
 function drawStates(stateGeoJson) {
     
     d3.select('#States').selectAll('.state')
@@ -132,63 +86,91 @@ function drawStates(stateGeoJson) {
 		.attr('d', path);
 }
 
-function regFill(reg) {
+function handleFiles(fileList) {
+
+    let reader = new FileReader();
     
-    switch (reg.properties.REG) {
-        case '11':
-        case '15':
-            return 'green';
-            break;
-        case '12':
-        case '14':
-        case '18':
-            return 'blue';
-            break;
-        case '13':
-        case '16':
-            return 'red';
-            break;
-        default:
-            return 'white';
+    reader.onload = function(event) {
+        cleanAndRender(reader.result);
     }
+    
+    reader.readAsText(fileList[0]);   
 }
 
-function drawCircles(data) {
+function cleanAndRender(dataString, propName) {
+    let data;
+    try {
+        data = JSON.parse(dataString);
+    } catch (err) {
+        console.error(err);
+        return;
+    }
+    
+    const $prop = propName || $('#textInput').val()
+    
+    propertyColor($prop);
+    
+	let d3Data = d3.select('#Regions').selectAll('.region')
+        .data(data.features);
         
-    setScales(data, 'withdrawal');
+    d3Data.enter()
+      .append('path')
+        .attr('d', path);
+        
+    d3Data
+        .attr('class', 'region')
+        .style('fill', fillFunc)
+        .on('mouseover', function(d) {
+            makeTip(d, $prop);
+        })
+        .on('mouseout', function(d) {
+            removeTip(d, $prop)
+        })
+        .attr('d', path);
     
-    //withdrawal
-    d3.select('#Circles').selectAll('.circle')
-        .data(data)
-      .enter().append('circle')
-        .attr('cx', function(d) { return projection([Number(d.lon), Number(d.lat)])[0]})
-        .attr('cy', function(d) { return projection([Number(d.lon), Number(d.lat)])[1]})
-        .attr('class', 'circle')
-        .attr('stroke-width', 1)
-        .attr('r', function(d) {return radiusScale(d.withdrawal);})
-        .style('fill', 'black');
-	    
-    //draw legend    
-    let legend = d3.legend.size()
-        .scale(radiusScale)
-        .cells([1, 10, 100, 1000])
-        .shape('circle')
-        .shapePadding(20)
-        .labelOffset(20)
-        .orient('horizontal')
-    
-    d3.select('#Legend')
-        .call(legend);    
+    d3Data.exit()
+      .remove();    
 }
 
-function setScales(data, property) {
-    
-    const min = _.min(_.map(data, function (d) {return d[property]}));
-    const max = _.max(_.map(data, function (d) {return d[property]}));
+function makeTip(d, prop) {
+    console.log('make', d.properties[prop]);
+}
 
-    radiusScale = d3.scale.log()
-        .domain([0.9 * min, 1.1 * max])
-        .range([5,15]);
+function removeTip(d, prop) {
+    console.log('remove', d.properties[prop]);
+}
+
+function fillFunc(datum) {
+    return 'blue';
+}
+
+function propertyColor(prop) {
+    if(typeof prop === 'undefined' || prop === '') {
+        fillFunc = function (datum) { return 'blue'; };
+        return;
+    }
+
+    fillFunc = function(datum) {
+        switch (Number(datum.properties[prop]) % 5) {
+            case 0:
+                return 'green';
+                break;
+            case 1:
+                return 'orange';
+                break;
+            case 2:
+                return 'blue';
+                break;
+            case 3:
+                return 'red';
+                break;
+            case 4:
+                return 'purple';
+                break;
+            default:
+                return 'white';
+        }
+    }    
 }
 
 function zoomed() {
