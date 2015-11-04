@@ -4,13 +4,10 @@ const aspectRatio = 1.618;
 const MAXZOOM = 20;
 
 let tic;
-let projection;
-let path;
-let zoom;
 
 window.onload = function () {
     tic = new Date();
-    prepMap(function(err, p) {projection = p.projection; path = p.path;});
+    prepMap();
     drawStates(INPUTS.states);
     window.setTimeout(function() {
         render(INPUTS.regions);
@@ -19,14 +16,14 @@ window.onload = function () {
 }
 
 function showElapsed() {
-	var toc = new Date();
-	var time = toc.getTime() - tic.getTime()
+	const toc = new Date();
+	const time = toc.getTime() - tic.getTime()
 	console.log('' + time + 'ms elapsed')
 }
 
-function prepMap(cb) {
+function prepMap() {
 
-	var g = d3.select('#map1').append('svg')
+	const g = d3.select('#map1').append('svg')
 	g.attr('id', 'SVG1')
 	 .attr('width', +d3.select('#map1').style('width').slice(0,-2) - 48)
 	g.attr('height', g.attr('width') / aspectRatio)
@@ -37,7 +34,7 @@ function prepMap(cb) {
 		.classed('chartTitle', true);
 
 	//set up zoom behavior
-	zoom = d3.behavior.zoom()
+	const zoom = d3.behavior.zoom()
 		.translate([0,0])
 		.scale(1)
 		.scaleExtent([0.25,MAXZOOM])
@@ -45,7 +42,7 @@ function prepMap(cb) {
 	zoom(g);
 	
 	//make the gs here
-	var z = g.append('svg:g')
+	const z = g.append('svg:g')
 		.attr('id', 'zoomWrapper');
     z.append('svg:g')
         .attr('id', 'States');
@@ -57,12 +54,16 @@ function prepMap(cb) {
         .attr('id', 'Legend')
         .attr('transform', 'translate(10,10)');
 
-    var projection = d3.geo.albersUsa()
+    const projection = d3.geo.albersUsa()
 		.scale(1.2 * g.attr('width'))
 		.translate([g.attr('width') / 2, g.attr('height') / 2])
 
-	var path = d3.geo.path()
+	const path = d3.geo.path()
 		.projection(projection);
+        
+    //bind path to the render functions so we don't have a global
+    drawStates = drawStates.bind(path);
+    render = render.bind(path);
 		        
     d3.select('#map1').append('div')
         .attr('id', 'infoDivA')
@@ -76,17 +77,16 @@ function prepMap(cb) {
         .style('top', '10px')
         .style('margin-left', '' + ((d3.select('#map1').property('clientWidth') - 15)/2) + 'px')
         .style('margin-right', '15px');
-        		
-	cb(null, {projection: projection, path: path});
 }
 
 function drawStates(stateGeoJson) {
-    
+    //path is bound to this
+   
     d3.select('#States').selectAll('.state')
         .data(stateGeoJson.features)
       .enter().append('path')
         .attr('class', function(d) { return 'state state' + d.id})
-		.attr('d', path);
+		.attr('d', this);
 }
 
 function handleFiles(fileList) {
@@ -114,6 +114,8 @@ function clean(dataString) {
 }
 
 function render(data) {
+    //path is bound to this
+    
     if(data instanceof Error) return;
 
     const props = Object.keys(data.features[0].properties)
@@ -127,7 +129,7 @@ function render(data) {
         
     d3Data
         .attr('class', 'region')
-        .attr('d', path);
+        .attr('d', this);
     
     d3Data.exit()
       .remove();
