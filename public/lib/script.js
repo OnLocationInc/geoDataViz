@@ -1,3 +1,4 @@
+;(function() {
 'use strict'
 
 const aspectRatio = 1.618;
@@ -183,3 +184,4 @@ function zoomed() {
 	d3.selectAll('.region')
 		.attr('stroke-width', 1 / d3.event.scale); 
 }
+})();
