@@ -24,6 +24,11 @@ div.chart{
     height: 150px;
 }
 
+rect.swatch{
+    stroke: black;
+    stroke-width: 0.5;
+}
+
 text.chartTitle{
 	font-size: 18px;
 	font-weight: bold;

@@ -13,11 +13,13 @@ html(lang="en")
             h1#head= 'Geo Data Visualization'
             .row#pre1
                 .col-md-6: .form-group
-                    input(type='file', class='form-control', id='fileInput', onchange='handleFiles(this.files);')
+                    input(type='file', class='form-control',
+                    id='fileInput', onchange='handleFiles(this.files);')
                 .col-md-6: .form-group
-                    input(type='text', class='form-control', 
-                    id='textInput', onchange='propertyColor()',
-                    placeholder='property to color...')
+                    select(class='form-control', 
+                    id='selectInput', onchange='propertyColor()')
+                      each prop in locals.props
+                        option= prop
             .row#chartContainer
                 .col-lg-1
                 .col-lg-10.col-xs-12.chart#map1
@@ -28,10 +30,11 @@ html(lang="en")
         script(src='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js')
         script(src='http://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js')
         script(src='lib/saveSvgAsPng.js')
+        script(src='lib/d3-legend.min.js')
         script(type = 'text/javascript').
             var INPUTS = {};
-            INPUTS.states = (!{JSON.stringify(locals.locals)}).states;
+            INPUTS.states = (!{JSON.stringify(locals)}).states;
         script(type = 'text/javascript').
-            INPUTS.regions = (!{JSON.stringify(locals.locals)}).regions;
+            INPUTS.regions = (!{JSON.stringify(locals)}).regions;
         script(src='lib/script.js')
             

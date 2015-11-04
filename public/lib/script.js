@@ -1,4 +1,3 @@
-;(function() {
 'use strict'
 
 const aspectRatio = 1.618;
@@ -14,7 +13,7 @@ window.onload = function () {
     prepMap(function(err, p) {projection = p.projection; path = p.path;});
     drawStates(INPUTS.states);
     window.setTimeout(function() {
-        cleanAndRender(JSON.stringify(INPUTS.regions), 'REG')
+        render(INPUTS.regions);
     }, 10);
     showElapsed();
 }
@@ -47,15 +46,18 @@ function prepMap(cb) {
 	
 	//make the gs here
 	var z = g.append('svg:g')
-		.attr('id', 'zoomWrapper')
+		.attr('id', 'zoomWrapper');
     z.append('svg:g')
         .attr('id', 'States');
 	z.append('svg:g')
-		.attr('id', 'Regions')
+		.attr('id', 'Regions');
 	g.append('svg:g')
 		.attr('id', 'Tooltips');
-		
-	var projection = d3.geo.albersUsa()
+    g.append('svg:g')
+        .attr('id', 'Legend')
+        .attr('transform', 'translate(10,10)');
+
+    var projection = d3.geo.albersUsa()
 		.scale(1.2 * g.attr('width'))
 		.translate([g.attr('width') / 2, g.attr('height') / 2])
 
@@ -92,86 +94,162 @@ function handleFiles(fileList) {
     let reader = new FileReader();
     
     reader.onload = function(event) {
-        cleanAndRender(reader.result);
+        render(clean(reader.result));
     }
     
     reader.readAsText(fileList[0]);   
 }
 
-function cleanAndRender(dataString, propName) {
+function clean(dataString) {
+    
     let data;
     try {
         data = JSON.parse(dataString);
+        return data;
     } catch (err) {
         console.error(err);
-        return;
+        return err;
     }
-    
-    const $prop = propName || $('#textInput').val()
-    
-    propertyColor($prop);
-    
+        
+}
+
+function render(data) {
+    if(data instanceof Error) return;
+
+    const props = Object.keys(data.features[0].properties)
+    redoSelect(props);
+        
 	let d3Data = d3.select('#Regions').selectAll('.region')
         .data(data.features);
         
     d3Data.enter()
       .append('path')
-        .attr('d', path);
         
     d3Data
         .attr('class', 'region')
-        .style('fill', fillFunc)
-        .on('mouseover', function(d) {
-            makeTip(d, $prop);
-        })
-        .on('mouseout', function(d) {
-            removeTip(d, $prop)
-        })
         .attr('d', path);
     
     d3Data.exit()
-      .remove();    
+      .remove();
+      
+    propertyColor();
+}
+
+function redoSelect(props) {
+    
+    const $sel = d3.select('#selectInput')
+    
+    $sel.selectAll('option').remove()
+    
+    $sel.selectAll('option')
+        .data(props, function(d) {return d;})
+      .enter().append('option')
+        .text(function(d) {return d});
+    
 }
 
 function makeTip(d, prop) {
-    console.log('make', d.properties[prop]);
+    //console.log('make', d.properties[prop]);
 }
 
 function removeTip(d, prop) {
-    console.log('remove', d.properties[prop]);
+    //console.log('remove', d.properties[prop]);
 }
 
 function fillFunc(datum) {
     return 'blue';
 }
 
-function propertyColor(prop) {
-    if(typeof prop === 'undefined' || prop === '') {
-        fillFunc = function (datum) { return 'blue'; };
-        return;
-    }
+function recolor(prop) {
+    
+    d3.selectAll('.region')
+        .style('fill', function(d) {
+            return fillFunc(d.properties[prop])
+        })
+        .on('mouseover', function(d) {
+            makeTip(d, prop);
+        })
+        .on('mouseout', function(d) {
+            removeTip(d, prop)
+        })
+}
 
-    fillFunc = function(datum) {
-        switch (Number(datum.properties[prop]) % 5) {
-            case 0:
-                return 'green';
-                break;
-            case 1:
-                return 'orange';
-                break;
-            case 2:
-                return 'blue';
-                break;
-            case 3:
-                return 'red';
-                break;
-            case 4:
-                return 'purple';
-                break;
-            default:
-                return 'white';
+function propertyColor() {
+    
+    const $prop = $('#selectInput').val();
+    
+    defineFillFunc($prop);
+    recolor($prop);
+}
+    
+function defineFillFunc(prop) {
+
+    const vals = [];
+    d3.selectAll('.region').each(function(d) {
+        vals.push(d.properties[prop]);
+    });
+    let uniqs = _.uniq(vals);
+
+    removeLegend();
+    
+    if(!isNaN(Number(uniqs[0])) && uniqs.length > vals.length/2 ) {
+        //continuous?
+        uniqs = _.map(uniqs, function(d) {return Number(d);});
+        const min = _.min(uniqs);
+        const max = _.max(uniqs);
+        const range = max - min;
+        
+        fillFunc = d3.scale.linear()
+            .domain([_.min([min - 0.1*range,0]), min + 0.5*range, max + 0.1*range])
+            .range(['red', 'white', 'blue']);
+            
+        makeContinuousLegend(min, range, max);
+        
+    } else if (uniqs.length < 11) {
+
+        //discrete10
+        if(!isNaN(Number(uniqs[0]))) {
+            uniqs = uniqs.sort(function (a,b) {return Number(a) - Number(b)});
         }
-    }    
+        fillFunc = d3.scale.category10()
+            .domain(uniqs);
+        makeDiscreteLegend(uniqs);
+    } else {
+
+        //discrete20
+        if(!isNaN(Number(uniqs[0]))) {
+            uniqs = uniqs.sort(function (a,b) {return Number(a) - Number(b)});
+        }
+        fillFunc = d3.scale.category20()
+            .domain(uniqs);        
+        makeDiscreteLegend(uniqs);
+    }
+}
+
+function removeLegend() {
+    d3.select('#Legend').selectAll('.cell').remove();
+}
+
+function makeContinuousLegend(min, range, max) {
+    const legendLinear = d3.legend.color()
+        .shapeWidth(30)
+        .cells([min, min + range/4, min + range/2, min + 3*range/4, max])
+        .shapePadding(4)
+        .scale(fillFunc);
+
+    d3.select('#Legend')
+        .call(legendLinear);
+}
+
+function makeDiscreteLegend(cells) {
+    const legOrd = d3.legend.color()
+        .shape('circle')
+        .shapePadding(5)
+        .cells(cells)
+        .scale(fillFunc);
+        
+    d3.select('#Legend')
+        .call(legOrd);
 }
 
 function zoomed() {
@@ -184,4 +262,3 @@ function zoomed() {
 	d3.selectAll('.region')
 		.attr('stroke-width', 1 / d3.event.scale); 
 }
-})();

@@ -32,8 +32,10 @@ app.get('/', function(req, res){
 });
 
 function sendResponse(got) {
-    got.res.render('index', {locals: {
+    const regions = JSON.parse(got.regions);
+    got.res.render('index', {
         states: JSON.parse(got.states),
-        regions: JSON.parse(got.regions),
-    }});
+        regions: regions,
+        props: Object.keys(regions.features[0].properties)
+    });
 }
