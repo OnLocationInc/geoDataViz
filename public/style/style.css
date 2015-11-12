@@ -12,6 +12,10 @@ body {
 	background-color: white;
 }
 
+.centered{
+    text-align: center
+}
+
 div.chart{
 	border: 3px solid gray;
 	-webkit-border-radius: 5px;
