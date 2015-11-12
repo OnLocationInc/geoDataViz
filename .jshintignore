@@ -1,0 +1,3 @@
+node_modules/
+public/lib/d3-legend.min.js
+public/lib/saveSvgAsPng.js

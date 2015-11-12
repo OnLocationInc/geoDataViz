@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 const aspectRatio = 1.618;
 const MAXZOOM = 20;
@@ -13,19 +13,19 @@ window.onload = function () {
         render(INPUTS.regions);
     }, 10);
     showElapsed();
-}
+};
 
 function showElapsed() {
 	const toc = new Date();
-	const time = toc.getTime() - tic.getTime()
-	console.log('' + time + 'ms elapsed')
+	const time = toc.getTime() - tic.getTime();
+	console.log('' + time + 'ms elapsed');
 }
 
 function prepMap() {
 
-	const g = d3.select('#map1').append('svg')
+	const g = d3.select('#map1').append('svg');
 	g.attr('id', 'SVG1')
-	 .attr('width', +d3.select('#map1').style('width').slice(0,-2) - 48)
+	 .attr('width', +d3.select('#map1').style('width').slice(0,-2) - 48);
 	g.attr('height', g.attr('width') / aspectRatio)
 	 .classed('SVGwrapper', true);
 			
@@ -38,7 +38,7 @@ function prepMap() {
 		.translate([0,0])
 		.scale(1)
 		.scaleExtent([0.25,MAXZOOM])
-		.on('zoom', zoomed)
+		.on('zoom', zoomed);
 	zoom(g);
 	
 	//make the gs here
@@ -56,7 +56,7 @@ function prepMap() {
 
     const projection = d3.geo.albersUsa()
 		.scale(1.2 * g.attr('width'))
-		.translate([g.attr('width') / 2, g.attr('height') / 2])
+		.translate([g.attr('width') / 2, g.attr('height') / 2]);
 
 	const path = d3.geo.path()
 		.projection(projection);
@@ -80,12 +80,13 @@ function prepMap() {
 }
 
 function drawStates(stateGeoJson) {
+    /*jshint validthis:true */
     //path is bound to this
    
     d3.select('#States').selectAll('.state')
         .data(stateGeoJson.features)
       .enter().append('path')
-        .attr('class', function(d) { return 'state state' + d.id})
+        .attr('class', function(d) { return 'state state' + d.id;})
 		.attr('d', this);
 }
 
@@ -95,7 +96,7 @@ function handleFiles(fileList) {
     
     reader.onload = function(event) {
         render(clean(reader.result));
-    }
+    };
     
     reader.readAsText(fileList[0]);   
 }
@@ -114,18 +115,19 @@ function clean(dataString) {
 }
 
 function render(data) {
+    /*jshint validthis:true */
     //path is bound to this
     
     if(data instanceof Error) return;
 
-    const props = Object.keys(data.features[0].properties)
+    const props = Object.keys(data.features[0].properties);
     redoSelect(props);
         
 	let d3Data = d3.select('#Regions').selectAll('.region')
         .data(data.features);
         
     d3Data.enter()
-      .append('path')
+      .append('path');
         
     d3Data
         .attr('class', 'region')
@@ -139,14 +141,15 @@ function render(data) {
 
 function redoSelect(props) {
     
-    const $sel = d3.select('#selectInput')
+    const $sel = d3.select('#selectInput');
     
-    $sel.selectAll('option').remove()
+    $sel.selectAll('option').remove();
     
     $sel.selectAll('option')
         .data(props, function(d) {return d;})
       .enter().append('option')
-        .text(function(d) {return d});
+        .attr('value', function(d) {return d;})
+        .text(function(d) {return d;});
     
 }
 
@@ -166,22 +169,26 @@ function recolor(prop) {
     
     d3.selectAll('.region')
         .style('fill', function(d) {
-            return fillFunc(d.properties[prop])
+            return fillFunc(d.properties[prop]);
         })
         .on('mouseover', function(d) {
             makeTip(d, prop);
         })
         .on('mouseout', function(d) {
-            removeTip(d, prop)
-        })
+            removeTip(d, prop);
+        });
 }
 
 function propertyColor() {
     
-    const $prop = $('#selectInput').val();
+    const $prop = d3.select('#selectInput').property('value');
     
     defineFillFunc($prop);
     recolor($prop);
+}
+
+function numberSort(a,b) {
+    return Number(a) - Number(b);
 }
     
 function defineFillFunc(prop) {
@@ -211,7 +218,7 @@ function defineFillFunc(prop) {
 
         //discrete10
         if(!isNaN(Number(uniqs[0]))) {
-            uniqs = uniqs.sort(function (a,b) {return Number(a) - Number(b)});
+            uniqs = uniqs.sort(numberSort);
         }
         fillFunc = d3.scale.category10()
             .domain(uniqs);
@@ -220,7 +227,7 @@ function defineFillFunc(prop) {
 
         //discrete20
         if(!isNaN(Number(uniqs[0]))) {
-            uniqs = uniqs.sort(function (a,b) {return Number(a) - Number(b)});
+            uniqs = uniqs.sort(numberSort);
         }
         fillFunc = d3.scale.category20()
             .domain(uniqs);        
