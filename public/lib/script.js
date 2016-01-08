@@ -113,7 +113,7 @@ function dataReady(err, data) {
     drawBasins(basins);
     drawStates(states);
     
-    drawCircles(consumpWithdrawal);
+    //drawCircles(consumpWithdrawal);
 }    
 
 function drawBasins(basinGeoJson) {
@@ -138,7 +138,7 @@ function drawStates(stateGeoJson) {
 function hucFill(huc) {
     switch (huc.properties.REG) {
         case '11':
-        case '15':
+        case '16':
             return 'green';
             break;
         case '12':
@@ -146,8 +146,9 @@ function hucFill(huc) {
         case '18':
             return 'blue';
             break;
+        case '06':
         case '13':
-        case '16':
+        case '15':
             return 'red';
             break;
         default:
