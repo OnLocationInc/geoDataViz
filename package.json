@@ -6,13 +6,17 @@
     "express": "^4.13.3",
     "jade": "^1.11.0",
     "await": "^0.2.5",
-    "d3": "^3.5.8"
+    "d3": "^3.5.8",
+    "lodash": "^3.0.0",
+    "express-mongo-db": "^2.0.3",
+    "dotenv": "^2.0.0"
+
   },
   "devDependencies": {
     "jshint": "^2.8.0"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "node app.js",
     "lint": "jshint ."
   },
   "jshintConfig": {
@@ -26,5 +30,9 @@
       "INPUTS": false
     }
   },
-  "author": "Blake"
+  "engines": {
+    "node": "^4.x",
+    "npm": "^3.x"
+  },
+  "author": "Blake Thomas"
 }
