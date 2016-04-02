@@ -5,7 +5,7 @@ const app = express();
 const await = require('await');
 const fs = require('fs');
 
-const port = process.env.PORT || process.argv[2] || 80;
+const port = process.env.PORT || process.argv[2] || 3000;
 
 app.set('views', __dirname + '/views');
 app.set('view engine', "jade");

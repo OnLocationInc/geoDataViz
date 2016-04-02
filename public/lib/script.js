@@ -1,6 +1,6 @@
 'use strict';
 
-const aspectRatio = 1.618;
+const aspectRatio = 1.825;
 const MAXZOOM = 20;
 
 let tic;
@@ -65,18 +65,12 @@ function prepMap() {
     drawStates = drawStates.bind(path);
     render = render.bind(path);
 		        
-    d3.select('#map1').append('div')
-        .attr('id', 'infoDivA')
-        .attr('class', 'infoDiv')
-        .style('width', '' + ((d3.select('#map1').property('clientWidth') - 60)/2) + 'px')
-        .style('float', 'left');
-        
-    d3.select('#map1').append('div')
-        .attr('id', 'infoDivB')
-        .attr('class', 'infoDiv')
-        .style('top', '10px')
-        .style('margin-left', '' + ((d3.select('#map1').property('clientWidth') - 15)/2) + 'px')
-        .style('margin-right', '15px');
+  d3.select('#map1').append('div').classed('row', true).attr('id', 'outInfo')
+    .append('div').classed('col-sm-12', true)
+      .attr('id', 'infoDiv')
+      .attr('class', 'infoDiv')
+      .append('table').attr('class', 'table table-condensed table-bordered table-responsive');
+      // .style('width', '' + ((d3.select('#map1').property('clientWidth') - 60)/2) + 'px')
 }
 
 function drawStates(stateGeoJson) {
@@ -136,55 +130,90 @@ function render(data) {
     d3Data.exit()
       .remove();
       
+    attachListeners();
     propertyColor();
+}
+
+function attachListeners() {
+  const $regions = d3.selectAll('.region')
+  
+  //remove listeners
+  $regions.on('click', null);
+  $regions.on('mouseover', null);
+  $regions.on('mouseout', null);
+  
+  //infoDiv table for click
+  $regions
+    .on('click', refreshInfoDiv)    
+    .on('mouseover', makeTip)
+    .on('mouseout', removeTip);
+    
+}
+
+function refreshInfoDiv(datum) {
+  
+  const props = _.keys(datum.properties);
+  const vals  = props.map(function(d) {return datum.properties[d]});
+
+  const $table = d3.select('.table');
+  
+  var $rows = $table.selectAll('.table-row').data(props);
+  
+  $rows.enter().append('tr');
+  $rows.classed('table-row', true);
+  $rows.html(function(d, i) {
+    return '<td>' + d + '</td> <td>' + vals[i] + '</td>'
+  });
 }
 
 function redoSelect(props) {
     
-    const $sel = d3.select('#selectInput');
-    
-    $sel.selectAll('option').remove();
-    
-    $sel.selectAll('option')
-        .data(props, function(d) {return d;})
-      .enter().append('option')
-        .attr('value', function(d) {return d;})
-        .text(function(d) {return d;});
-    
+  const $sel = d3.select('#selectInput');
+  
+  $sel.selectAll('option').remove();
+  
+  $sel.selectAll('option')
+      .data(props, function(d) {return d;})
+    .enter().append('option')
+      .attr('value', function(d) {return d;})
+      .text(function(d) {return d;});
+  
 }
 
-function makeTip(d, prop) {
-    //console.log('make', d.properties[prop]);
+function makeTip(d) {
+  
+  const prop = getProp();
+  // console.log('make', d.properties[prop]);
 }
 
-function removeTip(d, prop) {
-    //console.log('remove', d.properties[prop]);
+function removeTip(d) {
+
+  const prop = getProp();
+  // console.log('remove', d.properties[prop]);
 }
 
 function fillFunc(datum) {
     return 'blue';
 }
 
-function recolor(prop) {
+function recolor() {
     
-    d3.selectAll('.region')
-        .style('fill', function(d) {
-            return fillFunc(d.properties[prop]);
-        })
-        .on('mouseover', function(d) {
-            makeTip(d, prop);
-        })
-        .on('mouseout', function(d) {
-            removeTip(d, prop);
-        });
+  const prop = getProp();
+  
+  d3.selectAll('.region')
+    .style('fill', function(d) {
+      return fillFunc(d.properties[prop]);
+    });
+}
+
+function getProp() {
+  return d3.select('#selectInput').property('value');
 }
 
 function propertyColor() {
-    
-    const $prop = d3.select('#selectInput').property('value');
-    
-    defineFillFunc($prop);
-    recolor($prop);
+       
+    defineFillFunc(getProp());
+    recolor();
 }
 
 function numberSort(a,b) {
