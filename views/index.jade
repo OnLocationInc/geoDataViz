@@ -12,10 +12,10 @@ html(lang="en")
                         a(href='#') Home
             h1#head= 'Geo Data Visualization'
             .row#pre1
-                .col-md-6: .form-group
+                .col-md-5.col-md-offset-1: .form-group
                     input(type='file', class='form-control',
                     id='fileInput', onchange='handleFiles(this.files);')
-                .col-md-6: .form-group
+                .col-md-5: .form-group
                     select(class='form-control', 
                     id='selectInput', onchange='propertyColor()')
                       each prop in locals.props
